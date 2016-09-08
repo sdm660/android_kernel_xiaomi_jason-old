@@ -266,16 +266,6 @@
 "	msr_s " __stringify(r) ", %x0\n"			\
 	UNDEFINE_MSR_S : : "rZ" (v)
 
-static inline void config_sctlr_el1(u32 clear, u32 set)
-{
-	u32 val;
-
-	asm volatile("mrs %0, sctlr_el1" : "=r" (val));
-	val &= ~clear;
-	val |= set;
-	asm volatile("msr sctlr_el1, %0" : : "r" (val));
-}
-
 /*
  * Unlike read_cpuid, calls to read_sysreg are never expected to be
  * optimized away or replaced with synthetic values.
@@ -306,6 +296,16 @@ static inline void config_sctlr_el1(u32 clear, u32 set)
 	u64 __val = (u64)(v);					\
 	asm volatile(__msr_s(r, __val));			\
 } while (0)
+
+static inline void config_sctlr_el1(u32 clear, u32 set)
+{
+	u32 val;
+
+	val = read_sysreg(sctlr_el1);
+	val &= ~clear;
+	val |= set;
+	write_sysreg(val, sctlr_el1);
+}
 
 #endif
 
