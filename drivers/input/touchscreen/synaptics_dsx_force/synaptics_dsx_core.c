@@ -1869,6 +1869,10 @@ static void synaptics_rmi4_f1a_report(struct synaptics_rmi4_data *rmi4_data,
 			__func__);
 #endif
 
+	if(!rmi4_data->button_0d_enabled) {
+		return;
+	}
+
 	retval = synaptics_rmi4_reg_read(rmi4_data,
 			data_addr,
 			f1a->button_data_buffer,
