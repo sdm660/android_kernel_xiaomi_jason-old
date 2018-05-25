@@ -81,7 +81,6 @@ struct fpc1020_data {
 	struct pinctrl_state *pinctrl_state[ARRAY_SIZE(pctl_names)];
 	struct regulator *vreg[ARRAY_SIZE(vreg_conf)];
 
-	struct wake_lock ttw_wl;
 	int irq_gpio;
 	int rst_gpio;
 	struct mutex lock; /* To set/get exported values in sysfs */
@@ -560,8 +559,7 @@ static irqreturn_t fpc1020_irq_handler(int irq, void *handle)
 	dev_dbg(fpc1020->dev, "%s\n", __func__);
 
 	if (atomic_read(&fpc1020->wakeup_enabled)) {
-		wake_lock_timeout(&fpc1020->ttw_wl,
-					msecs_to_jiffies(FPC_TTW_HOLD_TIME));
+		pm_wakeup_event(fpc1020->dev, 5000);
 	}
 
 	sysfs_notify(&fpc1020->dev->kobj, NULL, dev_attr_irq.attr.name);
@@ -767,8 +765,6 @@ static int fpc1020_probe(struct platform_device *pdev)
 	device_init_wakeup(dev, 1);
 	mutex_init(&fpc1020->lock);
 
-	wake_lock_init(&fpc1020->ttw_wl, WAKE_LOCK_SUSPEND, "fpc_ttw_wl");
-
 	fpc1020->input_handler.filter = input_filter;
 	fpc1020->input_handler.connect = input_connect;
 	fpc1020->input_handler.disconnect = input_disconnect;
@@ -810,7 +806,6 @@ static int fpc1020_remove(struct platform_device *pdev)
 	fb_unregister_client(&fpc1020->fb_notifier);
 	sysfs_remove_group(&pdev->dev.kobj, &attribute_group);
 	mutex_destroy(&fpc1020->lock);
-	wake_lock_destroy(&fpc1020->ttw_wl);
 	(void)vreg_setup(fpc1020, "vdd_ana", false);
 	dev_info(&pdev->dev, "%s\n", __func__);
 
