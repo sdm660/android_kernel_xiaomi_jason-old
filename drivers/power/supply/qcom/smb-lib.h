@@ -406,7 +406,6 @@ struct smb_charger {
 	bool			report_charging_when_jeita_change;
 	bool			need_soft_charge_done;
 	bool			report_usb_absent;
-	bool			disable_try_snk;
 	bool			legacy;
 
 	/* workaround flag */
