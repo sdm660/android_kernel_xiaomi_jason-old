@@ -19,6 +19,8 @@ static __read_mostly unsigned short dynamic_stune_boost = CONFIG_INPUT_BOOST_STU
 module_param(dynamic_stune_boost, short, 0644);
 #endif
 
+unsigned long last_input_time;
+
 static __read_mostly unsigned int input_boost_freq_lp = CONFIG_INPUT_BOOST_FREQ_LP;
 static __read_mostly unsigned int input_boost_freq_hp = CONFIG_INPUT_BOOST_FREQ_PERF;
 static __read_mostly unsigned short input_boost_duration = CONFIG_INPUT_BOOST_DURATION_MS;
@@ -272,6 +274,7 @@ static void cpu_input_boost_input_event(struct input_handle *handle,
 	    !(get_boost_state(b) & SCREEN_AWAKE))
 		__cpu_input_boost_kick_max(b, CONFIG_WAKE_BOOST_DURATION_MS);
 
+	last_input_time = jiffies;
 }
 
 static int cpu_input_boost_input_connect(struct input_handler *handler,
