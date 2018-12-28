@@ -2014,7 +2014,6 @@ static int find_lowest_rq(struct task_struct *task, int sync)
 		struct task_struct* curr;
 		if (!cpumask_test_cpu(this_cpu, lowest_mask))
 			this_cpu = -1; /* Skip this_cpu opt if not among lowest */
-		rcu_read_lock();
 		for_each_domain(cpu, sd) {
 			if (sd->flags & SD_WAKE_AFFINE) {
 				int best_cpu;
@@ -2030,7 +2029,6 @@ static int find_lowest_rq(struct task_struct *task, int sync)
 					 * priority*/
 					if (!curr || (schedtune_task_boost(curr) == 0
 					    && schedtune_prefer_idle(curr) == 0)) {
-						rcu_read_unlock();
 						return this_cpu;
 					}
 				}
@@ -2044,7 +2042,6 @@ static int find_lowest_rq(struct task_struct *task, int sync)
 					 * priority*/
 					if(!curr || (schedtune_task_boost(curr) == 0
 						     && schedtune_prefer_idle(curr) == 0)) {
-						rcu_read_unlock();
 						return best_cpu;
 					}
 				}
@@ -2074,7 +2071,9 @@ static struct rq *find_lock_lowest_rq(struct task_struct *task, struct rq *rq)
 	int cpu;
 
 	for (tries = 0; tries < RT_MAX_TRIES; tries++) {
-		cpu = find_lowest_rq(task, 0);
+		rcu_read_lock();
+                cpu = find_lowest_rq(task, 0);
+		rcu_read_unlock();
 
 		if ((cpu == -1) || (cpu == rq->cpu))
 			break;
