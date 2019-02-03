@@ -291,7 +291,7 @@ static void mdss_dump_debug_bus(u32 bus_dump_flag,
 	in_log = (bus_dump_flag & MDSS_DBG_DUMP_IN_LOG);
 	in_mem = (bus_dump_flag & MDSS_DBG_DUMP_IN_MEM);
 
-	pr_info("======== Debug bus DUMP =========\n");
+	pr_debug("======== Debug bus DUMP =========\n");
 
 	if (in_mem) {
 		if (!(*dump_mem))
@@ -341,7 +341,7 @@ static void mdss_dump_debug_bus(u32 bus_dump_flag,
 	}
 	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_OFF);
 
-	pr_info("========End Debug bus=========\n");
+	pr_debug("========End Debug bus=========\n");
 }
 
 static void __vbif_debug_bus(struct vbif_debug_bus *head,
@@ -391,12 +391,12 @@ static void mdss_dump_vbif_debug_bus(u32 bus_dump_flag,
 	u32 bus_size;
 
 	if (real_time) {
-		pr_info("======== VBIF Debug bus DUMP =========\n");
+		pr_debug("======== VBIF Debug bus DUMP =========\n");
 		vbif_base = mdata->vbif_io.base;
 		dbg_bus = mdata->vbif_dbg_bus;
 		bus_size = mdata->vbif_dbg_bus_size;
 	} else {
-		pr_info("======== NRT VBIF Debug bus DUMP =========\n");
+		pr_debug("======== NRT VBIF Debug bus DUMP =========\n");
 		vbif_base = mdata->vbif_nrt_io.base;
 		dbg_bus = mdata->nrt_vbif_dbg_bus;
 		bus_size = mdata->nrt_vbif_dbg_bus_size;
@@ -455,7 +455,7 @@ static void mdss_dump_vbif_debug_bus(u32 bus_dump_flag,
 
 	mdss_mdp_clk_ctrl(MDP_BLOCK_POWER_OFF);
 
-	pr_info("========End VBIF Debug bus=========\n");
+	pr_debug("========End VBIF Debug bus=========\n");
 }
 
 void mdss_dump_reg(const char *dump_name, u32 reg_dump_flag, char *addr,
@@ -505,7 +505,7 @@ void mdss_dump_reg(const char *dump_name, u32 reg_dump_flag, char *addr,
 		xc = readl_relaxed(addr+0xc);
 
 		if (in_log)
-			pr_info("%pK : %08x %08x %08x %08x\n", addr, x0, x4, x8,
+			pr_debug("%pK : %08x %08x %08x %08x\n", addr, x0, x4, x8,
 				xc);
 
 		if (dump_addr && in_mem) {
