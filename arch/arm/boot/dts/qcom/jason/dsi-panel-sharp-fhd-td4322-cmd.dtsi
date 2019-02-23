@@ -24,6 +24,8 @@
 		qcom,mdss-dsi-panel-sleepwrmod = <0>;
 		qcom,mdss-dsi-panel-type = "dsi_cmd_mode";
 		qcom,mdss-dsi-panel-framerate = <60>;
+		qcom,ulps-enabled;
+		qcom,suspend-ulps-enabled;
 		qcom,mdss-dsi-virtual-channel-id = <0>;
 		qcom,mdss-dsi-stream = <0>;
 		qcom,mdss-dsi-panel-width = <1080>;
@@ -98,7 +100,7 @@
 		qcom,mdss-dsi-te-check-enable;
 		qcom,mdss-dsi-te-using-te-pin;
 		qcom,esd-err-irq-gpio = <&tlmm 74 0x2001>;
-		qcom,mdss-panel-on-dimming-delay = <120>;
+		qcom,mdss-panel-on-dimming-delay = <0>;
 		qcom,dispparam-enabled;
 		qcom,mdss-night-brightness = <7 25 43 61>;
 		qcom,mdss-dsi-panel-xy-coordinate = <0xA1 0x0F 0x1B>;
