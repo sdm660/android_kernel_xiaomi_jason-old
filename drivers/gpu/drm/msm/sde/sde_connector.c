@@ -12,13 +12,12 @@
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
 #include "msm_drv.h"
+#include <linux/suspend.h>
 
 #include "sde_kms.h"
 #include "sde_connector.h"
 #include "sde_backlight.h"
 #include "sde_splash.h"
-#include <linux/workqueue.h>
-#include <linux/atomic.h>
 
 #define SDE_DEBUG_CONN(c, fmt, ...) SDE_DEBUG("conn%d " fmt,\
 		(c) ? (c)->base.base.id : -1, ##__VA_ARGS__)
@@ -570,12 +569,6 @@ void sde_connector_prepare_fence(struct drm_connector *connector)
 	}
 
 	sde_fence_prepare(&to_sde_connector(connector)->retire_fence);
-}
-
-static void wake_up_cpu(struct work_struct *work)
-{
-	if (!cpu_up(1))
-		pr_info("cpu1 is online\n");
 }
 
 void sde_connector_complete_commit(struct drm_connector *connector)

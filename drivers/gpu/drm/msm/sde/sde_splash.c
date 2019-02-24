@@ -39,6 +39,8 @@
 #define SDE_LK_RUNNING_VALUE		0xC001CAFE
 #define SDE_LK_STOP_SPLASH_VALUE	0xDEADDEAD
 #define SDE_LK_EXIT_VALUE		0xDEADBEEF
+#define SDE_LK_INTERMEDIATE_STOP	0xBEEFBEEF
+#define SDE_LK_KERNEL_SPLASH_TALK_LOOP	20
 
 #define INTF_HDMI_SEL                  (BIT(25) | BIT(24))
 #define INTF_DSI0_SEL                  BIT(8)
@@ -195,8 +197,29 @@ static bool _sde_splash_lk_check(struct sde_hw_intr *intr)
  */
 static inline void _sde_splash_notify_lk_stop_splash(struct sde_hw_intr *intr)
 {
-	/* write splash stop signal to scratch register*/
+	int i = 0;
+
+	/* first write splash stop signal to scratch register */
 	SDE_REG_WRITE(&intr->hw, SCRATCH_REGISTER_1, SDE_LK_STOP_SPLASH_VALUE);
+
+	/*
+	 * Before next proceeding, kernel needs to check bootloader's
+	 * intermediate status to ensure LK's cocurrent flush is done.
+	 */
+	while (i++ < SDE_LK_KERNEL_SPLASH_TALK_LOOP) {
+		if ((SDE_LK_INTERMEDIATE_STOP ==
+			SDE_REG_READ(&intr->hw, SCRATCH_REGISTER_1)) ||
+			(SDE_LK_EXIT_VALUE ==
+			SDE_REG_READ(&intr->hw, SCRATCH_REGISTER_1)))
+			break;
+		else {
+			DRM_INFO("wait for LK's intermediate end for splash\n");
+			msleep(20);
+		}
+	}
+
+	if (i == SDE_LK_KERNEL_SPLASH_TALK_LOOP)
+		SDE_ERROR("Loop talk for LK and Kernel failed\n");
 }
 
 static int _sde_splash_gem_new(struct drm_device *dev,
@@ -318,9 +341,10 @@ static void _sde_splash_sent_pipe_update_uevent(struct sde_kms *sde_kms)
 	}
 
 	for (i = 0; i < MAX_BLOCKS; i++) {
-		if (sde_kms->splash_info.reserved_pipe_info[i] != 0xFFFFFFFF)
+		if (sde_kms->splash_info.reserved_pipe_info[i].pipe_id !=
+								0xFFFFFFFF)
 			snprintf(event_string, SZ_4K, "pipe%d avialable",
-				sde_kms->splash_info.reserved_pipe_info[i]);
+			sde_kms->splash_info.reserved_pipe_info[i].pipe_id);
 	}
 
 	DRM_INFO("generating pipe update event[%s]", event_string);
@@ -354,7 +378,7 @@ static int _sde_splash_free_module_resource(struct msm_mmu *mmu,
 		if (!msm_obj)
 			return -EINVAL;
 
-		if (mmu->funcs && mmu->funcs->unmap)
+		if (mmu->funcs && mmu->funcs->early_splash_unmap)
 			mmu->funcs->early_splash_unmap(mmu,
 				sinfo->splash_mem_paddr[i], msm_obj->sgt);
 
@@ -389,6 +413,21 @@ static bool _sde_splash_validate_commit(struct sde_kms *sde_kms,
 	}
 
 	return false;
+}
+
+static void
+_sde_splash_release_early_splash_layer(struct sde_splash_info *splash_info)
+{
+	int i = 0;
+
+	for (i = 0; i < MAX_BLOCKS; i++) {
+		if (splash_info->reserved_pipe_info[i].early_release) {
+			splash_info->reserved_pipe_info[i].pipe_id =
+								0xFFFFFFFF;
+			splash_info->reserved_pipe_info[i].early_release =
+								false;
+		}
+	}
 }
 
 __ref int sde_splash_init(struct sde_power_handle *phandle, struct msm_kms *kms)
@@ -516,8 +555,10 @@ int sde_splash_parse_reserved_plane_dt(struct sde_splash_info *splash_info,
 	if (!parent)
 		return -EINVAL;
 
-	for (i = 0; i < MAX_BLOCKS; i++)
-		splash_info->reserved_pipe_info[i] = 0xFFFFFFFF;
+	for (i = 0; i < MAX_BLOCKS; i++) {
+		splash_info->reserved_pipe_info[i].pipe_id = 0xFFFFFFFF;
+		splash_info->reserved_pipe_info[i].early_release = false;
+	}
 
 	i = 0;
 	for_each_child_of_node(parent, node) {
@@ -530,8 +571,11 @@ int sde_splash_parse_reserved_plane_dt(struct sde_splash_info *splash_info,
 
 		of_property_for_each_string(node, "qcom,plane-name",
 					prop, cname)
-		splash_info->reserved_pipe_info[i] =
+			splash_info->reserved_pipe_info[i].pipe_id =
 					_sde_splash_parse_sspp_id(cfg, cname);
+
+		splash_info->reserved_pipe_info[i].early_release =
+			of_property_read_bool(node, "qcom,pipe-early-release");
 		i++;
 	}
 
@@ -554,7 +598,8 @@ bool sde_splash_query_plane_is_reserved(struct sde_splash_info *sinfo,
 		return false;
 
 	for (i = 0; i < MAX_BLOCKS; i++) {
-		if (sinfo->reserved_pipe_info[i] == pipe)
+		if (!sinfo->reserved_pipe_info[i].early_release &&
+			(sinfo->reserved_pipe_info[i].pipe_id == pipe))
 			return true;
 	}
 
@@ -648,7 +693,7 @@ int sde_splash_smmu_map(struct drm_device *dev, struct msm_mmu *mmu,
 	for (i = 0; i < sinfo->splash_mem_num; i++) {
 		msm_obj = to_msm_bo(sinfo->obj[i]);
 
-		if (mmu->funcs && mmu->funcs->map) {
+		if (mmu->funcs && mmu->funcs->early_splash_map) {
 			ret = mmu->funcs->early_splash_map(mmu,
 				sinfo->splash_mem_paddr[i], msm_obj->sgt,
 				IOMMU_READ | IOMMU_NOEXEC);
@@ -756,12 +801,17 @@ bool sde_splash_get_lk_complete_status(struct msm_kms *kms)
 
 	intr = sde_kms->hw_intr;
 
-	if (sde_kms->splash_info.handoff &&
-		!sde_kms->splash_info.display_splash_enabled &&
-		SDE_LK_EXIT_VALUE == SDE_REG_READ(&intr->hw,
+	if (sde_kms->splash_info.handoff) {
+		if (sde_kms->splash_info.lk_is_exited)
+			return true;
+
+		if (!sde_kms->splash_info.display_splash_enabled &&
+			SDE_LK_EXIT_VALUE == SDE_REG_READ(&intr->hw,
 					SCRATCH_REGISTER_1)) {
-		SDE_DEBUG("LK totoally exits\n");
-		return true;
+			SDE_DEBUG("LK totally exits\n");
+			sde_kms->splash_info.lk_is_exited = true;
+			return true;
+		}
 	}
 
 	return false;
@@ -950,6 +1000,9 @@ int sde_splash_lk_stop_splash(struct msm_kms *kms,
 			sinfo->display_splash_enabled) {
 		if (_sde_splash_lk_check(sde_kms->hw_intr))
 			_sde_splash_notify_lk_stop_splash(sde_kms->hw_intr);
+
+		/* release splash RGB layer */
+		_sde_splash_release_early_splash_layer(sinfo);
 
 		sinfo->display_splash_enabled = false;
 

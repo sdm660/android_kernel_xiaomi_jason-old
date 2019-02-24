@@ -3092,8 +3092,6 @@ static int _sde_hdmi_parse_dt(struct device_node *node,
 
 	display->skip_ddc = of_property_read_bool(node,
 						"qcom,skip_ddc");
-	if (!display->non_pluggable)
-		hdmi_i2c_destroy(hdmi->i2c);
 
 	rc = _sde_hdmi_parse_dt_modes(node, &display->mode_list,
 					&display->num_of_modes);
