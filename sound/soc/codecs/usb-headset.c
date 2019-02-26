@@ -6,7 +6,6 @@
  *
  */
 
-#define DEBUG
 #include <linux/delay.h>
 #include <linux/platform_device.h>
 #include <linux/err.h>
@@ -20,14 +19,6 @@
 #include <linux/mfd/msm-cdc-pinctrl.h>
 #include <soc/qcom/socinfo.h>
 #include "usb-headset.h"
-
-#undef pr_debug
-#define pr_debug pr_err
-#undef dev_dbg
-#define dev_dbg dev_err
-#undef pr_info
-#define pr_info pr_err
-
 
 #define USBHS_SWITCH_AUDIO		0
 #define USBHS_SWITCH_USB		1
@@ -150,7 +141,7 @@ static int usbhs_get_typec_state(struct usb_headset *usbhs)
 		return retval;
 	}
 
-	pr_err("%s: Type-C mode is %d\n", __func__, prop.intval);
+	pr_debug("%s: Type-C mode is %d\n", __func__, prop.intval);
 
 	if (prop.intval == POWER_SUPPLY_TYPEC_SINK_AUDIO_ADAPTER)
 		return USBHS_SWITCH_AUDIO;
