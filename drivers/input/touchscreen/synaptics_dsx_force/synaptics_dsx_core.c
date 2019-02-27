@@ -1862,9 +1862,11 @@ static void synaptics_rmi4_f1a_report(struct synaptics_rmi4_data *rmi4_data,
 #endif
 		do_once = 0;
 	}
+#ifdef DEBUG
 	dev_err(rmi4_data->pdev->dev.parent,
 			"%s: touchkey interrupt event\n",
 			__func__);
+#endif
 
 	if(!rmi4_data->button_0d_enabled) {
 		return;
@@ -1890,11 +1892,13 @@ static void synaptics_rmi4_f1a_report(struct synaptics_rmi4_data *rmi4_data,
 		shift = button % 8;
 		status = ((data[index] >> shift) & MASK_1BIT);
 
+#ifdef DEBUG
 		dev_err(rmi4_data->pdev->dev.parent,
 				"%s: Button %d (code %d) ->%d\n",
 				__func__, button,
 				f1a->button_map[button],
 				status);
+#endif
 #ifdef NO_0D_WHILE_2D
 		if (rmi4_data->fingers_on_2d == false) {
 			if (status == 1) {
