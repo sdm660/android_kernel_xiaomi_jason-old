@@ -462,6 +462,7 @@ static void __init boot_cpu_init(void)
 	set_cpu_active(cpu, true);
 	set_cpu_present(cpu, true);
 	set_cpu_possible(cpu, true);
+	set_cpu_isolated(cpu, false);
 }
 
 void __init __weak smp_setup_processor_id(void)
