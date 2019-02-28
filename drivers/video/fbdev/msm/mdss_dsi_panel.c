@@ -12,6 +12,7 @@
  */
 
 #include <linux/module.h>
+#include <linux/moduleparam.h>
 #include <linux/interrupt.h>
 #include <linux/of.h>
 #include <linux/of_gpio.h>
@@ -56,6 +57,9 @@ void mdss_panel_reset_skip_enable(bool enable)
 {
 	mdss_panel_reset_skip = enable;
 }
+
+static unsigned int bl_level_soft_limit = 16;
+module_param(bl_level_soft_limit, uint, 0644);
 
 void mdss_dsi_panel_pwm_cfg(struct mdss_dsi_ctrl_pdata *ctrl)
 {
@@ -979,6 +983,22 @@ static void mdss_dsi_panel_bl_ctrl(struct mdss_panel_data *pdata,
 
 	ctrl_pdata = container_of(pdata, struct mdss_dsi_ctrl_pdata,
 				panel_data);
+
+	/* Manipulate bl_level to conform to a user-space soft limit */
+	if (bl_level_soft_limit && bl_level) {
+		/* Store this as a percentage */
+		bl_level = bl_level * (pdata->panel_info.bl_max - pdata->panel_info.bl_min) / 
+			(pdata->panel_info.bl_max - bl_level_soft_limit);
+
+		/*
+		 * Subtract our soft limit to ensure the limits properly
+		 * fit in our bounds.
+		 */
+		bl_level -= bl_level_soft_limit;
+
+		/* Make sure we don't turn off the display */
+		bl_level = (bl_level < pdata->panel_info.bl_min ? pdata->panel_info.bl_min : bl_level);
+	}
 
 	/*
 	 * Some backlight controllers specify a minimum duty cycle
