@@ -437,6 +437,8 @@
 
 &soc {
 	qcom,msm-thermal-simple {
+                #address-cells = <1>;
+                #size-cells = <0>;
 		compatible = "qcom,msm-thermal-simple";
 		qcom,thermal-vadc = <&pm660_vadc>;
 		qcom,adc-channel = <0x4c>;
