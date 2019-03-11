@@ -208,7 +208,6 @@ config ARM_TEGRA_DEVFREQ
 
 config DEVFREQ_SIMPLE_DEV
 	tristate "Device driver for simple clock device with no status info"
-	select DEVFREQ_GOV_PERFORMANCE
 	help
 	  Device driver for simple devices that control their frequency using
 	  clock APIs and don't have any form of status reporting.
@@ -216,7 +215,6 @@ config DEVFREQ_SIMPLE_DEV
 config QCOM_DEVFREQ_DEVBW
 	bool "QCOM DEVFREQ device for device master <-> slave IB/AB BW voting"
 	depends on ARCH_QCOM
-	select DEVFREQ_GOV_PERFORMANCE
 	default n
 	help
 	  Different devfreq governors use this devfreq device to make CPU to
