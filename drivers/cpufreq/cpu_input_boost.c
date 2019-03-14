@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2018 Sultan Alsawaf <sultan@kerneltoast.com>.
+ * Copyright (C) 2019 Tyler Nijmeh <tylernij@gmail.com>.
  */
 
 #define pr_fmt(fmt) "cpu_input_boost: " fmt
