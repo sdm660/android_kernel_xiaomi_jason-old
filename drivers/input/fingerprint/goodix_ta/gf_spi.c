@@ -43,6 +43,9 @@
 #include <linux/cpufreq.h>
 #include <linux/wakelock.h>
 #include <linux/mdss_io_util.h>
+#include <linux/cpu_input_boost.h>
+#include <linux/devfreq_boost.h>
+#include <linux/display_state.h>
 
 #include "gf_spi.h"
 
@@ -504,6 +507,10 @@ static irqreturn_t gf_irq(int irq, void *handle)
 #if defined(GF_NETLINK_ENABLE)
 	char temp[4] = { 0x0 };
 	uint32_t key_input = 0;
+	if (!is_display_on()) {
+		cpu_input_boost_kick_wake();
+		devfreq_boost_kick_wake(DEVFREQ_MSM_CPUBW);
+	}
 	temp[0] = GF_NET_EVENT_IRQ;
 	pr_debug("%s enter\n", __func__);
 	wake_lock_timeout(&fp_wakelock, msecs_to_jiffies(WAKELOCK_HOLD_TIME));
