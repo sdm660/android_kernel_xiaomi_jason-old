@@ -61,6 +61,7 @@
 #include <linux/atomic.h>
 #include <linux/binfmts.h>
 #include <linux/cpu_input_boost.h>
+#include <linux/devfreq_boost.h>
 
 /*
  * pidlists linger the following amount before being destroyed.  The goal
@@ -2781,6 +2782,7 @@ static ssize_t __cgroup_procs_write(struct kernfs_open_file *of, char *buf,
 		!memcmp(of->kn->parent->name, "top-app", sizeof("top-app")) &&
 		is_zygote_pid(tsk->parent->pid))
 	cpu_input_boost_kick_max(1250);
+	devfreq_boost_kick_max(DEVFREQ_MSM_CPUBW, 1250);
 
 	put_task_struct(tsk);
 	goto out_unlock_threadgroup;
