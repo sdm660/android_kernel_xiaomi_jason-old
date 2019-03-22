@@ -41,6 +41,9 @@
 #include <linux/fb.h>
 #include <linux/notifier.h>
 #include <linux/mdss_io_util.h>
+#include <linux/cpu_input_boost.h>
+#include <linux/devfreq_boost.h>
+#include <linux/display_state.h>
 
 #define FPC1020_NAME "fpc1020"
 
@@ -560,6 +563,11 @@ static irqreturn_t fpc1020_irq_handler(int irq, void *handle)
 
 	if (atomic_read(&fpc1020->wakeup_enabled)) {
 		pm_wakeup_event(fpc1020->dev, 5000);
+	}
+
+	if (!is_display_on()) {
+		cpu_input_boost_kick_wake();
+		devfreq_boost_kick_wake(DEVFREQ_MSM_CPUBW);
 	}
 
 	sysfs_notify(&fpc1020->dev->kobj, NULL, dev_attr_irq.attr.name);
