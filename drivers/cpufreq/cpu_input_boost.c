@@ -8,6 +8,7 @@
 #include <linux/cpu.h>
 #include <linux/cpufreq.h>
 #include <linux/fb.h>
+#include <linux/display_state.h>
 #include <linux/input.h>
 #include <linux/moduleparam.h>
 #include <linux/slab.h>
@@ -32,10 +33,9 @@ module_param(input_boost_duration, short, 0644);
 module_param(wake_boost_duration, short, 0644);
 
 /* Available bits for boost_drv state */
-#define SCREEN_AWAKE		BIT(0)
-#define INPUT_BOOST		BIT(1)
-#define WAKE_BOOST		BIT(2)
-#define MAX_BOOST		BIT(3)
+#define INPUT_BOOST		BIT(0)
+#define WAKE_BOOST		BIT(1)
+#define MAX_BOOST		BIT(2)
 
 struct boost_drv {
 	struct workqueue_struct *wq;
@@ -100,7 +100,7 @@ static void unboost_all_cpus(struct boost_drv *b)
 
 static void __cpu_input_boost_kick(struct boost_drv *b)
 {
-	if (!(get_boost_state(b) & SCREEN_AWAKE))
+	if (!is_display_on())
 		return;
 
 	queue_work(b->wq, &b->input_boost);
@@ -258,13 +258,10 @@ static int fb_notifier_cb(struct notifier_block *nb,
 		return NOTIFY_OK;
 
 	/* Boost when the screen turns on and unboost when it turns off */
-	if (*blank == FB_BLANK_UNBLANK) {
-		set_boost_bit(b, SCREEN_AWAKE);
+	if (*blank == FB_BLANK_UNBLANK)
 		__cpu_input_boost_kick_max(b, wake_boost_duration);
-	} else {
-		clear_boost_bit(b, SCREEN_AWAKE);
+	else
 		unboost_all_cpus(b);
-	}
 
 	return NOTIFY_OK;
 }
@@ -278,7 +275,7 @@ static void cpu_input_boost_input_event(struct input_handle *handle,
 	__cpu_input_boost_kick(b);
 
 	if (type == EV_KEY && code == KEY_POWER && value == 1 &&
-	    !(get_boost_state(b) & SCREEN_AWAKE))
+	    !is_display_on())
 		__cpu_input_boost_kick_max(b, wake_boost_duration);
 
 	last_input_time = jiffies;
