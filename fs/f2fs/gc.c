@@ -16,6 +16,7 @@
 #include <linux/fb.h>
 #include <linux/power_supply.h>
 #include <linux/wakelock.h>
+#include <linux/display_state.h>
 
 #include "f2fs.h"
 #include "node.h"
@@ -23,8 +24,7 @@
 #include "gc.h"
 #include <trace/events/f2fs.h>
 
-#define TRIGGER_SOFF (!screen_on && power_supply_is_system_supplied())
-static bool screen_on = true;
+#define TRIGGER_SOFF (!is_display_on() && power_supply_is_system_supplied())
 // Use 1 instead of 0 to allow thread interrupts
 #define SOFF_WAIT_MS 1
 
@@ -277,7 +277,7 @@ void f2fs_sbi_list_del(struct f2fs_sb_info *sbi)
 static struct work_struct f2fs_gc_fb_worker;
 static void f2fs_gc_fb_work(struct work_struct *work)
 {
-	if (screen_on) {
+	if (is_display_on()) {
 		f2fs_stop_all_gc_threads();
 	} else {
 		/*
@@ -301,11 +301,9 @@ static int fb_notifier_callback(struct notifier_block *self,
 
 		switch (*blank) {
 		case FB_BLANK_POWERDOWN:
-			screen_on = false;
 			queue_work(system_power_efficient_wq, &f2fs_gc_fb_worker);
 			break;
 		case FB_BLANK_UNBLANK:
-			screen_on = true;
 			queue_work(system_power_efficient_wq, &f2fs_gc_fb_worker);
 			break;
 		}
