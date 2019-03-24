@@ -277,39 +277,26 @@ void f2fs_sbi_list_del(struct f2fs_sb_info *sbi)
 static struct work_struct f2fs_gc_fb_worker;
 static void f2fs_gc_fb_work(struct work_struct *work)
 {
-	if (is_display_on()) {
+	if (is_display_on())
 		f2fs_stop_all_gc_threads();
-	} else {
-		/*
-		 * Start all GC threads exclusively from here
-		 * since the phone screen would turn on when
-		 * a charger is connected
-		 */
-		if (TRIGGER_SOFF)
-			f2fs_start_all_gc_threads();
-	}
+	else if (TRIGGER_SOFF)
+		f2fs_start_all_gc_threads();
 }
 
 static int fb_notifier_callback(struct notifier_block *self,
 				unsigned long event, void *data)
 {
 	struct fb_event *evdata = data;
-	int *blank;
 
-	if ((event == FB_EVENT_BLANK) && evdata && evdata->data) {
-		blank = evdata->data;
+	if (event != FB_EVENT_BLANK)
+		return NOTIFY_DONE;
 
-		switch (*blank) {
-		case FB_BLANK_POWERDOWN:
-			queue_work(system_power_efficient_wq, &f2fs_gc_fb_worker);
-			break;
-		case FB_BLANK_UNBLANK:
-			queue_work(system_power_efficient_wq, &f2fs_gc_fb_worker);
-			break;
-		}
-	}
+	if (!evdata || !evdata->data)
+		return NOTIFY_DONE;
 
-	return 0;
+	queue_work(system_power_efficient_wq, &f2fs_gc_fb_worker);
+
+	return NOTIFY_OK;
 }
 
 static struct notifier_block fb_notifier_block = {
