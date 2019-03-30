@@ -43,9 +43,7 @@
 #include <linux/regulator/consumer.h>
 #include <linux/input/synaptics_dsx.h>
 #include "synaptics_dsx_core.h"
-#ifdef KERNEL_ABOVE_2_6_38
 #include <linux/input/mt.h>
-#endif
 
 #if defined(CONFIG_SECURE_TOUCH)
 #include <linux/pm_runtime.h>
@@ -64,9 +62,7 @@
 
 #define VIRTUAL_KEY_MAP_FILE_NAME "virtualkeys." PLATFORM_DRIVER_NAME
 
-#ifdef KERNEL_ABOVE_2_6_38
 #define TYPE_B_PROTOCOL
-#endif
 
 #define WAKEUP_GESTURE false
 
@@ -3820,13 +3816,8 @@ static void synaptics_rmi4_set_params(struct synaptics_rmi4_data *rmi4_data)
 #endif
 
 #ifdef TYPE_B_PROTOCOL
-#ifdef KERNEL_ABOVE_3_6
 	input_mt_init_slots(rmi4_data->input_dev,
 			rmi4_data->num_of_fingers, INPUT_MT_DIRECT);
-#else
-	input_mt_init_slots(rmi4_data->input_dev,
-			rmi4_data->num_of_fingers);
-#endif
 #endif
 
 	f1a = NULL;
