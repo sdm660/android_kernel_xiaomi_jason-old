@@ -12,6 +12,7 @@
 #include <linux/input.h>
 #include <linux/moduleparam.h>
 #include <linux/slab.h>
+#include <linux/version.h>
 
 #ifdef CONFIG_DYNAMIC_STUNE_BOOST
 static bool stune_boost_active;
