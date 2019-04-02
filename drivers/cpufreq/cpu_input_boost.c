@@ -25,11 +25,15 @@ unsigned long last_input_time;
 
 static __read_mostly unsigned int input_boost_freq_lp = CONFIG_INPUT_BOOST_FREQ_LP;
 static __read_mostly unsigned int input_boost_freq_hp = CONFIG_INPUT_BOOST_FREQ_PERF;
+static __read_mostly unsigned int max_boost_freq_lp = CONFIG_MAX_BOOST_FREQ_LP;
+static __read_mostly unsigned int max_boost_freq_hp = CONFIG_MAX_BOOST_FREQ_PERF;
 static __read_mostly unsigned short input_boost_duration = CONFIG_INPUT_BOOST_DURATION_MS;
 static __read_mostly unsigned short wake_boost_duration = CONFIG_WAKE_BOOST_DURATION_MS;
 
 module_param(input_boost_freq_lp, uint, 0644);
 module_param(input_boost_freq_hp, uint, 0644);
+module_param(max_boost_freq_lp, uint, 0644);
+module_param(max_boost_freq_hp, uint, 0644);
 module_param(input_boost_duration, short, 0644);
 module_param(wake_boost_duration, short, 0644);
 
@@ -70,9 +74,9 @@ static u32 get_max_boost_freq(struct cpufreq_policy *policy)
 	u32 freq;
 
 	if (cpumask_test_cpu(policy->cpu, cpu_lp_mask))
-		freq = CONFIG_MAX_BOOST_FREQ_LP;
+		freq = max_boost_freq_lp;
 	else
-		freq = CONFIG_MAX_BOOST_FREQ_PERF;
+		freq = max_boost_freq_hp;
 
 	return min(freq, policy->max);
 }
