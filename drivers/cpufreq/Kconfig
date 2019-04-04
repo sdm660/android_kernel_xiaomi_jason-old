@@ -284,12 +284,6 @@ config INPUT_BOOST_FREQ_PERF
 	help
 	  Input boost frequency for the performance CPU cluster.
 
-config INPUT_BOOST_STUNE_VALUE
-	int "Dynamic stune boost value"
-	default "10"
-	help
-	  Dynamic stune boost value
-
 config MAX_BOOST_FREQ_LP
 	int "Low-power cluster max-boost freq"
 	default "0"
