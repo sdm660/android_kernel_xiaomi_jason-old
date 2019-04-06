@@ -21,7 +21,6 @@ static struct usb_diag_ch legacy_ch;
 static struct diag_request *d_req_ptr;
 
 struct diag_tty_data {
-	struct tty_port port;
 	struct tty_struct *tty;
 	int open_count;
 };
@@ -215,11 +214,8 @@ struct usb_diag_ch *tty_diag_channel_open(const char *name, void *priv,
 	legacy_ch.notify = notify;
 	spin_unlock_irqrestore(&diag_tty_lock, flags);
 
-	for (i = 0; i < DIAG_TTY_MINOR_COUNT; i++) {
-		tty_port_init(&diag_tty[i].port);
-		tty_port_register_device(&diag_tty[i].port, diag_tty_driver,
-				i, NULL);
-	}
+	for (i = 0; i < DIAG_TTY_MINOR_COUNT; i++)
+		tty_register_device(diag_tty_driver, i, NULL);
 
 	return &legacy_ch;
 }
@@ -233,8 +229,8 @@ void tty_diag_channel_close(struct usb_diag_ch *diag_ch)
 	int i;
 
 	if (diag_ch->priv_usb) {
-		tty_insert_flip_char(&priv_usb->port, 0x00, TTY_BREAK);
-		tty_flip_buffer_push(&priv_usb->port);
+		tty_insert_flip_char(priv_usb->tty, 0x00, TTY_BREAK);
+		tty_flip_buffer_push(priv_usb->tty);
 	}
 	spin_lock_irqsave(&diag_tty_lock, flags);
 	diag_ch->priv = NULL;
@@ -296,7 +292,7 @@ int tty_diag_channel_write(struct usb_diag_ch *diag_ch,
 		return -EIO;
 	}
 
-	tty_allocated = tty_prepare_flip_string(&tty_data->port,
+	tty_allocated = tty_prepare_flip_string(tty_data->tty,
 						&tty_buf, d_req->length);
 
 	if (tty_allocated < d_req->length) {
@@ -308,7 +304,7 @@ int tty_diag_channel_write(struct usb_diag_ch *diag_ch,
 	diag_ch->priv_usb = NULL;
 
 	memcpy(tty_buf, d_req->buf, d_req->length);
-	tty_flip_buffer_push(&tty_data->port);
+	tty_flip_buffer_push(tty_data->tty);
 
 	spin_unlock_irqrestore(&diag_tty_lock, flags);
 
