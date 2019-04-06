@@ -14,7 +14,7 @@
 #define DIAG_MAJOR 185
 #define DIAG_TTY_MINOR_COUNT 3
 
-static DEFINE_SPINLOCK(diag_tty_lock);
+static DEFINE_MUTEX(diag_tty_lock);
 
 static struct tty_driver *diag_tty_driver;
 static struct usb_diag_ch legacy_ch;
@@ -43,7 +43,6 @@ static int diag_tty_open(struct tty_struct *tty, struct file *f)
 {
 	int n = tty->index;
 	struct diag_tty_data *tty_data;
-	unsigned long flags;
 
 	tty_data = diag_tty + n;
 
@@ -57,13 +56,13 @@ static int diag_tty_open(struct tty_struct *tty, struct file *f)
 	if (tty_data->open_count >= 1)
 		return -EBUSY;
 
-	spin_lock_irqsave(&diag_tty_lock, flags);
+	mutex_lock(&diag_tty_lock);
 
 	tty_data->tty = tty;
 	tty->driver_data = tty_data;
 	tty_data->open_count++;
 
-	spin_unlock_irqrestore(&diag_tty_lock, flags);
+	mutex_unlock(&diag_tty_lock);
 
 	legacy_ch.notify(legacy_ch.priv, USB_DIAG_CONNECT, NULL);
 
@@ -75,12 +74,11 @@ static void diag_tty_close(struct tty_struct *tty, struct file *f)
 	struct diag_tty_data *tty_data = tty->driver_data;
 	int disconnect_channel = 1;
 	int i;
-	unsigned long flags;
 
 	if (tty_data == NULL)
 		return;
 
-	spin_lock_irqsave(&diag_tty_lock, flags);
+	mutex_lock(&diag_tty_lock);
 	tty_data->open_count--;
 
 	for (i = 0; i < DIAG_TTY_MINOR_COUNT; i++) {
@@ -96,7 +94,7 @@ static void diag_tty_close(struct tty_struct *tty, struct file *f)
 	if (tty_data->open_count == 0)
 		tty->driver_data = NULL;
 
-	spin_unlock_irqrestore(&diag_tty_lock, flags);
+	mutex_unlock(&diag_tty_lock);
 }
 
 static int diag_tty_write(struct tty_struct *tty,
@@ -104,19 +102,18 @@ static int diag_tty_write(struct tty_struct *tty,
 {
 	struct diag_tty_data *tty_data = tty->driver_data;
 	struct diag_request *d_req_temp = d_req_ptr;
-	unsigned long flags;
 
-	spin_lock_irqsave(&diag_tty_lock, flags);
+	mutex_lock(&diag_tty_lock);
 
 	/* Make sure diag char driver is ready and no outstanding request */
 	if ((d_req_ptr == NULL) || legacy_ch.priv_usb) {
-		spin_unlock_irqrestore(&diag_tty_lock, flags);
+		mutex_unlock(&diag_tty_lock);
 		return -EAGAIN;
 	}
 
 	/* Diag packet must fit in buff and be written all at once */
 	if (len > d_req_ptr->length) {
-		spin_unlock_irqrestore(&diag_tty_lock, flags);
+		mutex_unlock(&diag_tty_lock);
 		return -EMSGSIZE;
 	}
 
@@ -128,7 +125,6 @@ static int diag_tty_write(struct tty_struct *tty,
 		if (d_req_ptr->actual + len > d_req_ptr->length) {
 			d_req_ptr->actual = 0;
 			diag_packet_incomplete = 0;
-			spin_unlock_irqrestore(&diag_tty_lock, flags);
 			return -EMSGSIZE;
 		} else {
 			memcpy(d_req_ptr->buf + d_req_ptr->actual, buf, len);
@@ -139,7 +135,7 @@ static int diag_tty_write(struct tty_struct *tty,
 	/* Check if packet is now complete */
 	if (d_req_ptr->buf[d_req_ptr->actual - 1] != 0x7E) {
 		diag_packet_incomplete = 1;
-		spin_unlock_irqrestore(&diag_tty_lock, flags);
+		mutex_unlock(&diag_tty_lock);
 		return len;
 	} else
 		diag_packet_incomplete = 0;
@@ -169,7 +165,8 @@ static int diag_tty_write(struct tty_struct *tty,
 	/* Set active tty for responding */
 	legacy_ch.priv_usb = tty_data;
 
-	spin_unlock_irqrestore(&diag_tty_lock, flags);
+	mutex_unlock(&diag_tty_lock);
+
 	legacy_ch.notify(legacy_ch.priv, USB_DIAG_READ_DONE, d_req_temp);
 
 	return len;
@@ -203,16 +200,14 @@ struct usb_diag_ch *tty_diag_channel_open(const char *name, void *priv,
 		void (*notify)(void *, unsigned, struct diag_request *))
 {
 	int i;
-	unsigned long flags;
 
 	if (legacy_ch.priv != NULL)
 		return ERR_PTR(-EBUSY);
 
-	spin_lock_init(&diag_tty_lock);
-	spin_lock_irqsave(&diag_tty_lock, flags);
+	mutex_lock(&diag_tty_lock);
 	legacy_ch.priv = priv;
 	legacy_ch.notify = notify;
-	spin_unlock_irqrestore(&diag_tty_lock, flags);
+	mutex_unlock(&diag_tty_lock);
 
 	for (i = 0; i < DIAG_TTY_MINOR_COUNT; i++)
 		tty_register_device(diag_tty_driver, i, NULL);
@@ -225,21 +220,20 @@ EXPORT_SYMBOL(tty_diag_channel_open);
 void tty_diag_channel_close(struct usb_diag_ch *diag_ch)
 {
 	struct diag_tty_data *priv_usb = diag_ch->priv_usb;
-	unsigned long flags;
 	int i;
 
 	if (diag_ch->priv_usb) {
 		tty_insert_flip_char(priv_usb->tty, 0x00, TTY_BREAK);
 		tty_flip_buffer_push(priv_usb->tty);
 	}
-	spin_lock_irqsave(&diag_tty_lock, flags);
+	mutex_lock(&diag_tty_lock);
 	diag_ch->priv = NULL;
 	diag_ch->notify = NULL;
 
 	for (i = DIAG_TTY_MINOR_COUNT - 1; i >= 0; i--)
 		tty_unregister_device(diag_tty_driver, i);
 
-	spin_unlock_irqrestore(&diag_tty_lock, flags);
+	mutex_unlock(&diag_tty_lock);
 }
 EXPORT_SYMBOL(tty_diag_channel_close);
 
@@ -260,7 +254,6 @@ int tty_diag_channel_write(struct usb_diag_ch *diag_ch,
 	struct diag_tty_data *tty_data = diag_ch->priv_usb;
 	unsigned char *tty_buf;
 	int tty_allocated;
-	unsigned long flags;
 	int cmd_code, subsys_id;
 
 	/* If diag packet is not 1:1 response (perhaps logging packet?),
@@ -268,7 +261,7 @@ int tty_diag_channel_write(struct usb_diag_ch *diag_ch,
 	if (tty_data == NULL)
 		tty_data = &(diag_tty[0]);
 
-	spin_lock_irqsave(&diag_tty_lock, flags);
+	mutex_lock(&diag_tty_lock);
 
 	if (dbg_ftm_flag == 1) {
 		cmd_code = (int)(*(char *)d_req->buf);
@@ -288,7 +281,7 @@ int tty_diag_channel_write(struct usb_diag_ch *diag_ch,
 	}
 
 	if (tty_data->tty == NULL) {
-		spin_unlock_irqrestore(&diag_tty_lock, flags);
+		mutex_unlock(&diag_tty_lock);
 		return -EIO;
 	}
 
@@ -296,7 +289,7 @@ int tty_diag_channel_write(struct usb_diag_ch *diag_ch,
 						&tty_buf, d_req->length);
 
 	if (tty_allocated < d_req->length) {
-		spin_unlock_irqrestore(&diag_tty_lock, flags);
+		mutex_unlock(&diag_tty_lock);
 		return -ENOMEM;
 	}
 
@@ -306,7 +299,7 @@ int tty_diag_channel_write(struct usb_diag_ch *diag_ch,
 	memcpy(tty_buf, d_req->buf, d_req->length);
 	tty_flip_buffer_push(tty_data->tty);
 
-	spin_unlock_irqrestore(&diag_tty_lock, flags);
+	mutex_unlock(&diag_tty_lock);
 
 	diag_ch->notify(diag_ch->priv, USB_DIAG_WRITE_DONE, d_req);
 
@@ -316,11 +309,9 @@ EXPORT_SYMBOL(tty_diag_channel_write);
 
 void tty_diag_channel_abandon_request()
 {
-	unsigned long flags;
-
-	spin_lock_irqsave(&diag_tty_lock, flags);
+	mutex_lock(&diag_tty_lock);
 	legacy_ch.priv_usb = NULL;
-	spin_unlock_irqrestore(&diag_tty_lock, flags);
+	mutex_unlock(&diag_tty_lock);
 }
 EXPORT_SYMBOL(tty_diag_channel_abandon_request);
 
