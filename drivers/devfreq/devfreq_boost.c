@@ -7,7 +7,6 @@
 
 #include <linux/devfreq_boost.h>
 #include <linux/fb.h>
-#include <linux/display_state.h>
 #include <linux/input.h>
 
 struct boost_dev {
@@ -27,6 +26,7 @@ struct boost_dev {
 struct df_boost_drv {
 	struct boost_dev devices[DEVFREQ_MAX];
 	struct notifier_block fb_notif;
+	bool screen_awake;
 };
 
 static struct df_boost_drv *df_boost_drv_g __read_mostly;
@@ -52,7 +52,7 @@ void devfreq_boost_kick(enum df_device device)
 	if (!d)
 		return;
 
-	if (!is_display_on())
+	if (!d->screen_awake)
 		return;
 
 	__devfreq_boost_kick(d->devices + device);
@@ -88,7 +88,7 @@ void devfreq_boost_kick_max(enum df_device device, unsigned int duration_ms)
 	if (!d)
 		return;
 
-	if (!is_display_on())
+	if (!d->screen_awake)
 		return;
 
 	__devfreq_boost_kick_max(d->devices + device, duration_ms);
@@ -252,13 +252,16 @@ static int fb_notifier_cb(struct notifier_block *nb,
 			  unsigned long action, void *data)
 {
 	struct df_boost_drv *d = container_of(nb, typeof(*d), fb_notif);
+	struct fb_event *evdata = data;
+	int *blank = evdata->data;
 
 	/* Parse framebuffer blank events as soon as they occur */
 	if (action != FB_EARLY_EVENT_BLANK)
 		return NOTIFY_OK;
 
 	/* Boost when the screen turns on and unboost when it turns off */
-	if (is_display_on()) {
+	d->screen_awake = *blank == FB_BLANK_UNBLANK;
+	if (d->screen_awake) {
 		int i;
 
 		for (i = 0; i < DEVFREQ_MAX; i++)
@@ -278,7 +281,7 @@ static void devfreq_boost_input_event(struct input_handle *handle,
 	struct df_boost_drv *d = handle->handler->private;
 	int i;
 
-	if (!is_display_on())
+	if (!d->screen_awake)
 		return;
 
 	for (i = 0; i < DEVFREQ_MAX; i++)
