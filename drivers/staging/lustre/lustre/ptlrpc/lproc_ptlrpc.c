@@ -1256,7 +1256,7 @@ int lprocfs_wr_import(struct file *file, const char __user *buffer,
 
 		*ptr = 0;
 		do_reconn = 0;
-		ptr += DSTRLEN("::");
+		ptr += strlen("::");
 		inst = simple_strtoul(ptr, &endptr, 10);
 		if (*endptr) {
 			CERROR("config: wrong instance # %s\n", ptr);
