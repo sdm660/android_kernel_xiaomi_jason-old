@@ -69,8 +69,10 @@ struct boost_drv {
 	atomic_t state;
 	unsigned long last_input_jiffies;
 
+#ifdef CONFIG_DYNAMIC_STUNE_BOOST
 	bool stune_active;
 	int stune_slot;
+#endif
 };
 
 static struct boost_drv *boost_drv_g __read_mostly;
@@ -150,22 +152,20 @@ bool cpu_input_boost_within_input(unsigned long timeout_ms)
 			   msecs_to_jiffies(timeout_ms));
 }
 
+#ifdef CONFIG_DYNAMIC_STUNE_BOOST
 static void update_stune_boost(struct boost_drv *b, int value)
 {
-#ifdef CONFIG_DYNAMIC_STUNE_BOOST
 	if (value && !b->stune_active)
 		b->stune_active = !do_stune_boost("top-app", value,
 						  &b->stune_slot);
-#endif
 }
 
 static void clear_stune_boost(struct boost_drv *b)
 {
-#ifdef CONFIG_DYNAMIC_STUNE_BOOST
 	if (b->stune_active)
 		b->stune_active = reset_stune_boost("top-app", b->stune_slot);
-#endif
 }
+#endif
 
 static void __cpu_input_boost_kick(struct boost_drv *b)
 {
@@ -304,21 +304,28 @@ static int cpu_notifier_cb(struct notifier_block *nb,
 	/* Boost CPU to max frequency on wake, regardless of screen state */
 	if (state & WAKE_BOOST) {
 		policy->min = get_max_boost_freq(policy);
+
+#ifdef CONFIG_DYNAMIC_STUNE_BOOST
 		update_stune_boost(b, stune_boost);
+#endif
 		return NOTIFY_OK;
 	}
 
 	/* Unboost when the screen is off */
 	if (state & SCREEN_OFF) {
 		policy->min = get_min_freq(policy);
+#ifdef CONFIG_DYNAMIC_STUNE_BOOST
 		clear_stune_boost(b);
+#endif
 		return NOTIFY_OK;
 	}
 
 	/* Boost CPU to max frequency for max boost */
 	if (state & MAX_BOOST) {
 		policy->min = get_max_boost_freq(policy);
+#ifdef CONFIG_DYNAMIC_STUNE_BOOST
 		update_stune_boost(b, stune_boost);
+#endif
 		return NOTIFY_OK;
 	}
 
@@ -328,10 +335,14 @@ static int cpu_notifier_cb(struct notifier_block *nb,
 	 */
 	if (state & INPUT_BOOST) {
 		policy->min = get_input_boost_freq(policy);
+#ifdef CONFIG_DYNAMIC_STUNE_BOOST
 		update_stune_boost(b, stune_boost);
+#endif
 	} else {
 		policy->min = get_min_freq(policy);
+#ifdef CONFIG_DYNAMIC_STUNE_BOOST
 		clear_stune_boost(b);
+#endif
 	}
 
 	return NOTIFY_OK;
