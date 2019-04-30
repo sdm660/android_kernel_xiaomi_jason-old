@@ -38,14 +38,9 @@ static unsigned short input_boost_duration __read_mostly =
 static unsigned short wake_boost_duration __read_mostly =
 	CONFIG_WAKE_BOOST_DURATION_MS;
 
-module_param(input_boost_freq_lp, uint, 0644);
-module_param(input_boost_freq_hp, uint, 0644);
-module_param_named(remove_input_boost_freq_lp, boost_min_freq_lp, uint, 0644);
-module_param_named(remove_input_boost_freq_perf, boost_min_freq_hp, uint, 0644);
 module_param(max_boost_freq_lp, uint, 0644);
 module_param(max_boost_freq_hp, uint, 0644);
 
-module_param(input_boost_duration, short, 0644);
 module_param(wake_boost_duration, short, 0644);
 
 #ifdef CONFIG_DYNAMIC_STUNE_BOOST
