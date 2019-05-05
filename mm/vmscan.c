@@ -46,6 +46,7 @@
 #include <linux/oom.h>
 #include <linux/prefetch.h>
 #include <linux/printk.h>
+#include <linux/simple_lmk.h>
 
 #include <asm/tlbflush.h>
 #include <asm/div64.h>
@@ -3224,7 +3225,16 @@ static bool prepare_kswapd_sleep(pg_data_t *pgdat, int order, long remaining,
 	if (waitqueue_active(&pgdat->pfmemalloc_wait))
 		wake_up_all(&pgdat->pfmemalloc_wait);
 
+#ifdef CONFIG_ANDROID_SIMPLE_LMK
+	if (pgdat_balanced(pgdat, order, classzone_idx)) {
+		simple_lmk_stop_reclaim();
+		return true;
+	}
+
+	return false;
+#else
 	return pgdat_balanced(pgdat, order, classzone_idx);
+#endif
 }
 
 /*
@@ -3325,6 +3335,11 @@ static int balance_pgdat(pg_data_t *pgdat, int order, int classzone_idx)
 	do {
 		bool raise_priority = true;
 		unsigned long lru_pages = 0;
+
+#ifdef CONFIG_ANDROID_SIMPLE_LMK
+		if (sc.priority == CONFIG_ANDROID_SIMPLE_LMK_AGGRESSION)
+			simple_lmk_start_reclaim();
+#endif
 
 		sc.nr_reclaimed = 0;
 
