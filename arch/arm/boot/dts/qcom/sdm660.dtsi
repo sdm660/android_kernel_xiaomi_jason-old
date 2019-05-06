@@ -2018,6 +2018,7 @@
 		qcom,xprt-linkid = <1>;
 		qcom,xprt-version = <1>;
 		qcom,fragmented-data;
+		qcom,low-latency-xprt;
 	};
 
 	qcom,venus@cce0000 {
