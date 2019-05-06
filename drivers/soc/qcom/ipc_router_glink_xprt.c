@@ -514,8 +514,8 @@ static void glink_xprt_notify_rxv(void *handle, const void *priv,
 	rx_work->pbuf_provider = pbuf_provider;
 	if (!glink_xprtp->dynamic_wakeup_source)
 		__pm_stay_awake(&glink_xprtp->notify_rxv_ws);
-	kthread_init_work(&rx_work->kwork, glink_xprt_read_data);
-	kthread_queue_work(&glink_xprtp->kworker, &rx_work->kwork);
+	init_kthread_work(&rx_work->kwork, glink_xprt_read_data);
+	queue_kthread_work(&glink_xprtp->kworker, &rx_work->kwork);
 }
 
 static void glink_xprt_notify_tx_done(void *handle, const void *priv,
@@ -548,9 +548,9 @@ static bool glink_xprt_notify_rx_intent_req(void *handle, const void *priv,
 	}
 	qrx_intent_work->glink_xprtp = glink_xprtp;
 	qrx_intent_work->intent_size = sz;
-	kthread_init_work(&qrx_intent_work->kwork,
+	init_kthread_work(&qrx_intent_work->kwork,
 			  glink_xprt_qrx_intent_worker);
-	kthread_queue_work(&glink_xprtp->kworker, &qrx_intent_work->kwork);
+	queue_kthread_work(&glink_xprtp->kworker, &qrx_intent_work->kwork);
 	return true;
 }
 
@@ -579,8 +579,8 @@ static void glink_xprt_notify_state(void *handle, const void *priv,
 			return;
 		}
 		xprt_work->glink_xprtp = glink_xprtp;
-		kthread_init_work(&xprt_work->kwork, glink_xprt_open_event);
-		kthread_queue_work(&glink_xprtp->kworker, &xprt_work->kwork);
+		init_kthread_work(&xprt_work->kwork, glink_xprt_open_event);
+		queue_kthread_work(&glink_xprtp->kworker, &xprt_work->kwork);
 		break;
 
 	case GLINK_LOCAL_DISCONNECTED:
@@ -601,8 +601,8 @@ static void glink_xprt_notify_state(void *handle, const void *priv,
 			return;
 		}
 		xprt_work->glink_xprtp = glink_xprtp;
-		kthread_init_work(&xprt_work->kwork, glink_xprt_close_event);
-		kthread_queue_work(&glink_xprtp->kworker, &xprt_work->kwork);
+		init_kthread_work(&xprt_work->kwork, glink_xprt_close_event);
+		queue_kthread_work(&glink_xprtp->kworker, &xprt_work->kwork);
 		break;
 	}
 }
@@ -779,7 +779,7 @@ static int ipc_router_glink_config_init(
 	scnprintf(xprt_wq_name, GLINK_NAME_SIZE, "%s_%s_%s",
 			glink_xprtp->ch_name, glink_xprtp->edge,
 			glink_xprtp->transport);
-	kthread_init_worker(&glink_xprtp->kworker);
+	init_kthread_worker(&glink_xprtp->kworker);
 	glink_xprtp->task = kthread_run(kthread_worker_fn,
 					&glink_xprtp->kworker,
 					"%s", xprt_wq_name);
