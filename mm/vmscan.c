@@ -3225,16 +3225,7 @@ static bool prepare_kswapd_sleep(pg_data_t *pgdat, int order, long remaining,
 	if (waitqueue_active(&pgdat->pfmemalloc_wait))
 		wake_up_all(&pgdat->pfmemalloc_wait);
 
-#ifdef CONFIG_ANDROID_SIMPLE_LMK
-	if (pgdat_balanced(pgdat, order, classzone_idx)) {
-		simple_lmk_stop_reclaim();
-		return true;
-	}
-
-	return false;
-#else
 	return pgdat_balanced(pgdat, order, classzone_idx);
-#endif
 }
 
 /*
@@ -3336,11 +3327,7 @@ static int balance_pgdat(pg_data_t *pgdat, int order, int classzone_idx)
 		bool raise_priority = true;
 		unsigned long lru_pages = 0;
 
-#ifdef CONFIG_ANDROID_SIMPLE_LMK
-		if (sc.priority == CONFIG_ANDROID_SIMPLE_LMK_AGGRESSION)
-			simple_lmk_start_reclaim();
-#endif
-
+		simple_lmk_decide_reclaim(sc.priority);
 		sc.nr_reclaimed = 0;
 
 		/*
@@ -3490,6 +3477,7 @@ static void kswapd_try_to_sleep(pg_data_t *pgdat, int order,
 	/* Try to sleep for a short interval */
 	if (prepare_kswapd_sleep(pgdat, order, remaining,
 						balanced_classzone_idx)) {
+		simple_lmk_stop_reclaim();
 		/*
 		 * Compaction records what page blocks it recently failed to
 		 * isolate pages from and skips them in the future scanning.
@@ -3515,6 +3503,7 @@ static void kswapd_try_to_sleep(pg_data_t *pgdat, int order,
 	 */
 	if (prepare_kswapd_sleep(pgdat, order, remaining,
 						balanced_classzone_idx)) {
+		simple_lmk_stop_reclaim();
 		trace_mm_vmscan_kswapd_sleep(pgdat->node_id);
 
 		/*
