@@ -5138,7 +5138,6 @@ static void mdss_fb_kick_frame_boost(int timeout_ms)
 		return;
 
 	if (timeout_ms < 0 || cpu_input_boost_within_input(timeout_ms)) {
-		cpu_input_boost_kick();
 		devfreq_boost_kick(DEVFREQ_MSM_CPUBW);
 	}
 }
