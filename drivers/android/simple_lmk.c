@@ -221,7 +221,7 @@ static void scan_and_kill(unsigned long pages_needed)
 		struct victim_info *victim = &victims[i];
 		struct task_struct *vtsk = victim->tsk;
 
-		pr_info("Killing %s with adj %d to free %lu kiB\n", vtsk->comm,
+		pr_info("Killing %s with adj %d to free %lu KiB\n", vtsk->comm,
 			vtsk->signal->oom_score_adj,
 			victim->size << (PAGE_SHIFT - 10));
 
