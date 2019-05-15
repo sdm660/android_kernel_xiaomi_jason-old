@@ -120,7 +120,7 @@
 
 &pm660l_wled {
 	qcom,en-cabc;
-	qcom,fs-curr-ua = <15000>;
+	qcom,fs-curr-ua = <20000>;
 	qcom,led-strings-list = [00 01];
 };
 
