@@ -33,6 +33,7 @@
 #define ARM64_WORKAROUND_CAVIUM_27456           11
 #define ARM64_HAS_VIRT_HOST_EXTN                12
 #define ARM64_HAS_32BIT_EL0                     13
+#define ARM64_HARDEN_BRANCH_PREDICTOR           14
 #define ARM64_UNMAP_KERNEL_AT_EL0               23
 #define ARM64_HAS_CRC32                         24
 
