@@ -1,5 +1,6 @@
 /*
  *  Copyright (C) 2009  Red Hat, Inc.
+ *  Copyright (C) 2019 XiaoMi, Inc.
  *
  *  This work is licensed under the terms of the GNU GPL, version 2. See
  *  the COPYING file in the top-level directory.
@@ -1799,6 +1800,7 @@ static void __split_huge_page_refcount(struct page *page,
 				      (1L << PG_mlocked) |
 				      (1L << PG_uptodate) |
 				      (1L << PG_active) |
+					  (1L << PG_workingset) |
 				      (1L << PG_unevictable)));
 		page_tail->flags |= (1L << PG_dirty);
 

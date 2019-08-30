@@ -1,4 +1,5 @@
 /* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2019 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -893,7 +894,6 @@ static void swrm_apply_port_config(struct swr_master *master)
 	bank = get_inactive_bank_num(swrm);
 	dev_dbg(swrm->dev, "%s: enter bank: %d master_ports: %d\n",
 		__func__, bank, master->num_port);
-
 
 	swrm_copy_data_port_config(master, bank);
 }

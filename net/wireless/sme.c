@@ -1018,6 +1018,8 @@ void __cfg80211_disconnected(struct net_device *dev, const u8 *ie,
 
 	wdev->current_bss = NULL;
 	wdev->ssid_len = 0;
+	kzfree(wdev->connect_keys);
+	wdev->connect_keys = NULL;
 	wdev->conn_owner_nlportid = 0;
 
 	nl80211_send_disconnected(rdev, dev, reason, ie, ie_len, from_ap);
