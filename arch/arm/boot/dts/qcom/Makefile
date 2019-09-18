@@ -183,6 +183,9 @@ endif
 
 dtb-$(CONFIG_ARCH_MSMHAMSTER) += msmhamster-rumi.dtb
 
+ifeq (1,1)
+dtb-$(CONFIG_ARCH_SDM660) += jason-sdm660.dtb
+else
 dtb-$(CONFIG_ARCH_SDM660) += sdm660-sim.dtb \
 	sdm660-internal-codec-cdp.dtb \
 	sdm660-internal-codec-mtp.dtb \
@@ -263,8 +266,8 @@ dtb-$(CONFIG_ARCH_SDM660) += sdm660-sim.dtb \
 	sda636-pm660a-rcm.dtb \
 	platina-sdm660.dtb \
 	nitrogen-sdm636.dtb \
-	carbon-sdm660.dtb \
-	jason-sdm660.dtb
+	carbon-sdm660.dtb
+endif
 
 dtb-$(CONFIG_ARCH_SDM630) += sdm630-rumi.dtb \
 	sdm630-pm660a-rumi.dtb \
