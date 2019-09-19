@@ -424,7 +424,8 @@ static int smb2_parse_dt(struct smb2 *chip)
 						"qcom,auto-recharge-soc");
 
 	chg->micro_usb_mode = of_property_read_bool(node, "qcom,micro-usb");
-
+	chg->disable_try_snk = of_property_read_bool(node,
+				"qcom,disable-try-sink");
 	chg->need_soft_charge_done = of_property_read_bool(node,
 				"qcom,need-soft-done");
 
