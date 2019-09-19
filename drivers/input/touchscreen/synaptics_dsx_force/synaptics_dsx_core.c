@@ -4937,8 +4937,6 @@ static const struct file_operations tpdbg_operations = {
 };
 #endif
 
-extern unsigned int get_hw_version_major(void);
-
 static int synaptics_rmi4_probe(struct platform_device *pdev)
 {
 	int retval;
