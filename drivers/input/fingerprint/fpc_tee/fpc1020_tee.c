@@ -37,7 +37,6 @@
 #include <linux/platform_device.h>
 #include <linux/regulator/consumer.h>
 #include <linux/wakelock.h>
-#include <asm/hwconf_manager.h>
 #include <linux/fb.h>
 #include <linux/notifier.h>
 #include <linux/mdss_io_util.h>
