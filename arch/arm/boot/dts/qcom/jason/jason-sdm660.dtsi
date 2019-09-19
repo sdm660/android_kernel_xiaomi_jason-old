@@ -41,6 +41,9 @@
 	qcom,fg-jeita-thresholds = <0 15 45 58>;
 	qcom,fg-batt-temp-delta = <6>;
 	qcom,fg-esr-clamp-mohms = <60>;
+	qcom,fg-cutoff-current = <200>;
+	qcom,slope-limit-temp-threshold = <100>;
+	qcom,slope-limit-coeffs = <10 11 12 13>;
 };
 
 &i2c_2 {
@@ -121,36 +124,7 @@
 		qcom,asel-gpio = <&pm660_gpios 13 0>;
 		qcom,msm-micbias1-ext-cap;
 		qcom,audio-uart-sw-gpio = <&tlmm 77 0>;
-	};
-
-	tlmm: pinctrl@03000000 {
-		wcd_gnd_mic_swap {
-			wcd_gnd_mic_swap_idle: wcd_gnd_mic_swap_idle {
-				mux {
-					pins = "gpio56";
-					function = "gpio";
-				};
-				config {
-					pins = "gpio56";
-					drive-strength = <2>;
-					bias-pull-down;
-					output-low;
-				};
-			};
-
-			wcd_gnd_mic_swap_active: wcd_gnd_mic_swap_active {
-				mux {
-					pins = "gpio56";
-					function = "gpio";
-				};
-				config {
-					pins = "gpio56";
-					drive-strength = <2>;
-					bias-disable;
-					output-high;
-				};
-			};
-		};
+		qcom,us-euro-gpios = <&us_euro_gpio>;
 	};
 
 	disp_vdd_vreg: disp_vdd_vreg {
