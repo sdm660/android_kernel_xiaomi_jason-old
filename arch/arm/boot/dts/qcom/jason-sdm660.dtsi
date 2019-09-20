@@ -1,5 +1,6 @@
 #include "xiaomi-sdm660-common.dtsi"
 #include "jason-camera-sensor.dtsi"
+#include "jason-ramoops.dtsi"
 
 &pm660_charger {
 	qcom,usb-icl-ua = <2800000>;
