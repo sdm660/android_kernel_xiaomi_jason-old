@@ -11,15 +11,15 @@
  * GNU General Public License for more details.
  */
 
-qcom,itech-3000mah {
+qcom,c8_coslight_3500mah {
 	/* #2920063_Xiaomi_C8cos_3500mAh_averaged_MasterSlave_May15th2017*/
 	qcom,max-voltage-uv = <4400000>;
 	qcom,nom-batt-capacity-mah = <3500>;
 	qcom,fg-cc-cv-threshold-mv = <4390>;
 	qcom,batt-id-kohm = <100>;
 	qcom,battery-beta = <3380>;
-	qcom,battery-type = "itech_3000mah";
-	qcom,checksum = <0x23EB>;
+	qcom,battery-type = "c8_coslight";
+	qcom,checksum = <0x76EC>;
 	qcom,gui-version = "PM660GUI - 0.0.0.42";
 	qcom,fg-profile-data = [
 		 8A 1F 94 05

@@ -11,14 +11,14 @@
  * GNU General Public License for more details.
  */
 
-qcom,itech_3000mah {
+qcom,e4_atl_5500mah {
 	/* #3326715_Xiaomi_E4atl_5500mAh_averaged_MasterSlave_Mar2nd2018*/
 	qcom,max-voltage-uv = <4400000>;
 	qcom,nom-batt-capacity-mah = <5500>;
 	qcom,fg-cc-cv-threshold-mv = <4390>;
-	qcom,batt-id-kohm = <75>;
+	qcom,batt-id-kohm = <68>;
 	qcom,battery-beta = <3380>;
-	qcom,battery-type = "itech_3000mah";
+	qcom,battery-type = "e4_atl";
 	qcom,checksum = <0x6830>;
 	qcom,gui-version = "PM660GUI - 0.0.0.45";
 	qcom,fg-profile-data = [
