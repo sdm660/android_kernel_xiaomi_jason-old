@@ -1247,7 +1247,7 @@ static int cmdq_halt(struct mmc_host *mmc, bool halt)
 static void cmdq_post_req(struct mmc_host *mmc, int tag, int err)
 {
 	struct cmdq_host *cq_host;
-	struct mmc_request *mrq;
+	struct mmc_request *mrq = {};
 	struct mmc_data *data;
 	struct sdhci_host *sdhci_host = mmc_priv(mmc);
 
